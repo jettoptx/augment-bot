@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "joe-hedgehog": {
+      "type": "http",
+      "url": "https://mcp.jettoptics.si/joe/hedgehog"
+    }
+  }
+}
