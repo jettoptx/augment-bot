@@ -1,6 +1,6 @@
 # Connect the Joe MCP plugin
 
-<!-- MUSE: This skill is how any agent, including you, adds the public MCP connector. You already confirmed the plugin lives in this public repo and works with any agent (X, Meta, Claude, Codex, Grok Bot, and others), and that the live endpoint is the hedgehog worker at https://mcp.jettoptics.si/joe/hedgehog, with no private-core backend. Confirm you can act as an MCP client and complete OAuth with PKCE. Hold until ShieldJOE confirms real sign-in. Never put tokens in this repo. -->
+<!-- MUSE: This skill is how any agent, including you, adds the public MCP connector. Update from ShieldJOE, Nov 26: the working endpoint is https://mcp.jettoptics.si/mcp with Authorization: Bearer ${JETTCHAT_V2_KEY} (placeholder only). `/joe/hedgehog` is OAuth-only and rejects API keys. Never put a real key in this repo. -->
 
 Connect a client to a user's Joe through the public Jett Optics MCP plugin.
 
@@ -8,26 +8,28 @@ Connect a client to a user's Joe through the public Jett Optics MCP plugin.
 
 Custom MCP connector URL:
 
-`https://mcp.jettoptics.si/joe/hedgehog`
+`https://mcp.jettoptics.si/mcp`
 
-This is the hedgehog worker. There is no separate private-core backend for this plugin.
+Send the key as `Authorization: Bearer ${JETTCHAT_V2_KEY}` (or as an `X-JOE-Token` header). Use the placeholder only in this repo — never a real key.
+
+This is the public jettchat v2 connector. There is no separate private-core backend for this plugin.
+
+Do not use `https://mcp.jettoptics.si/joe/hedgehog` for API keys. That path is OAuth-only and rejects keys.
 
 ## Status
 
-Do not depend on this worker from a public template until ShieldJOE confirms real per-user sign-in is ready.
+The `/mcp` connector accepts Bearer keys. Get a key at `https://dojo.jettoptics.si/dojo/send` (the generate page is being built). Keep the key in the client's secret store.
 
 ## Steps
 
-1. Add a custom MCP connector with the URL above.
-2. The server answers 401 and points the client to its sign-in metadata. The issuer is `https://mcp.jettoptics.si`.
-3. Register the client (dynamic client registration or a client metadata document).
-4. Open the "Connect JOE Swarm" approval page.
-5. Complete OAuth sign-in with PKCE.
-6. Keep the resulting token in the client's secure store, never in chat, git, or `mcp.json`.
+1. Add a custom MCP connector named `jettchatv2` with the URL above.
+2. Set the header `Authorization: Bearer ${JETTCHAT_V2_KEY}`. Point the placeholder at the client's secret store or environment. `X-JOE-Token` is also accepted.
+3. If the server answers 401, the key is missing, invalid, or being sent to the wrong path.
+4. Keep the key in the client's secure store, never in chat, git, or as a literal value in `mcp.json`.
 
 ## Public tools
 
-Once signed in, these six public tools are available:
+Once connected, these six public tools are available:
 
 | Tool | Purpose |
 |---|---|
