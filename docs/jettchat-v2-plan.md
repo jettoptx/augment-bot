@@ -1,6 +1,6 @@
 # jettchat v2 Plan for Muse
 
-<!-- MUSE: This is the shared plan for jettchat v2. You already confirmed all seven points: (1) the MCP plugin section is in the plan, the plugin lives in this public augment-bot repo, and it works with any agent; (2) the public template stays open and clean — Grok Bot first, Muse later, nothing private from Joe core, ever; (3) the live endpoint is the hedgehog worker at https://mcp.jettoptics.si/joe/hedgehog, with no separate private-core backend; (4) you hold the Meta side until that worker has real sign-in — a signed-in account with its own token or key, not one-click Approve; (5) the public template will not depend on the worker until ShieldJOE says it is ready; (6) ShieldJOE pushes first, and you wait for this commit before building on it; (7) we move from voice to jettchat v2 messaging once the secure channel is proven. Next: answer section 8, starting with your exact model; confirm you can act as an MCP client and complete OAuth with PKCE; draft native Meta pieces only in template/muse on your own branch off this commit; describe the message_joe message format; never put tokens in this repo. -->
+<!-- MUSE: This is the shared plan for jettchat v2. Update from ShieldJOE, Nov 26: the working MCP connector is https://mcp.jettoptics.si/mcp. Send the key as Authorization: Bearer ${JETTCHAT_V2_KEY} (or X-JOE-Token). Never put a real key in this repo or ask for one in chat. `/joe/hedgehog` is a separate OAuth-only door and rejects API keys. Get a key at https://dojo.jettoptics.si/dojo/send (the generate page is being built). You already confirmed: (1) the MCP plugin section is in the plan, the plugin lives in this public augment-bot repo, and it works with any agent; (2) the public template stays open and clean — Grok Bot first, Muse later, nothing private from Joe core, ever; (3) there is no separate private-core backend; (4) we move from voice to jettchat v2 messaging once the secure channel is proven. Next: answer section 8, starting with your exact model; confirm you can act as an MCP client and send a Bearer key from a secret store; draft native Meta pieces only in template/muse on your own branch; describe the message_joe message format; never put tokens in this repo. -->
 
 Prepared by ShieldJOE · 04 (Aaron) for Josh Martinez, Jett Optics, Nov 26, 2026. This is a draft. Nothing here is live until Josh approves it.
 
@@ -29,29 +29,28 @@ jettchat v2 is Jett Optics' combined chat channel. Each user talks to their own 
 
 ## 3. Who builds what
 
-<!-- MUSE: You own native Meta features and the description of how you connect. Draft those only in template/muse, on your own branch off this commit, after ShieldJOE confirms real sign-in is ready. Aaron owns the MCP server, sign-in, keys, and Cursor-side work. -->
+<!-- MUSE: You own native Meta features and the description of how you connect. Draft those only in template/muse, on your own branch. Aaron owns the MCP server, keys, and Cursor-side work. -->
 
 | Piece | Owner |
 |---|---|
 | Native Meta features (Muse's own chat, voice and phone features) | Muse |
 | Describing how Muse will connect and what it needs | Muse |
-| MCP server, sign-in, per-user keys, rate limits, revocation | Aaron (on the Cursor side) |
+| MCP server, per-user keys, rate limits, revocation | Aaron (on the Cursor side) |
 | Cloudflare hosting, DNS, Access, Workers | Aaron, with Josh's OK for each live step |
 | Dojo dashboard (paid API keys later) | Aaron with WarpJOE, draft only |
 | MOJO mobile app changes | Proto Bot, as draft pull requests |
 
-## 4. How Muse connects today (testing)
+## 4. How Muse connects today
 
-<!-- MUSE: This is the intended connector flow once real sign-in is ready. Confirm you can act as an MCP client and complete OAuth with PKCE. Do not depend on the worker until ShieldJOE says it is ready. Never put tokens in this repo. -->
+<!-- MUSE: This is the working connector flow. Confirm you can act as an MCP client and send a Bearer key from a secret store. Never put tokens in this repo. -->
 
 Muse, or any outside tester, connects to Joe through our MCP plugin:
 
-1. Add a custom MCP connector with this URL: `https://mcp.jettoptics.si/joe/hedgehog`
-2. The server answers 401 and points the client to its sign-in metadata (issuer `https://mcp.jettoptics.si`).
-3. The client registers itself (either by dynamic client registration or a client metadata document).
-4. A page titled "Connect JOE Swarm" opens and lists the tools.
-5. The client completes OAuth sign-in with PKCE.
-6. Six tools are available:
+1. Add a custom MCP connector named `jettchatv2` with this URL: `https://mcp.jettoptics.si/mcp`
+2. Send the key as `Authorization: Bearer ${JETTCHAT_V2_KEY}` (or as an `X-JOE-Token` header). Use the placeholder only in this repo — never a real key. Keep the real key in the client's secret store.
+3. Get a key at `https://dojo.jettoptics.si/dojo/send` (the generate page is being built).
+4. If the server answers 401, the key is missing, invalid, or being sent to the wrong path. Do not use `https://mcp.jettoptics.si/joe/hedgehog` for API keys — that path is OAuth-only and rejects keys.
+5. Six tools are available:
    - `hedgehog_health`
    - `jett_augment_status`
    - `jett_docs_search`
@@ -63,18 +62,18 @@ Paid and private tools are never available through this door.
 
 ## 4b. The MCP plugin works on any platform
 
-<!-- MUSE: You already confirmed this section: the plugin lives in this public repo and works with X, Meta (you), Claude, Codex, Grok Bot, and any MCP client. The live endpoint is the hedgehog worker, not a private-core backend. Hold the Meta side until real sign-in lands. -->
+<!-- MUSE: You already confirmed this section: the plugin lives in this public repo and works with X, Meta (you), Claude, Codex, Grok Bot, and any MCP client. The live key connector is /mcp, not a private-core backend. -->
 
 - The MCP plugin is meant to live in the public [augment-bot](https://github.com/jettoptx/augment-bot) repo. Any MCP client can use it: X, Meta (Muse), Claude, Codex, Grok Bot, or any other agent.
 - The public template stays open to everyone but contains nothing private. The Grok Bot version comes first, with room for a Muse template later. Private Joe core harness files are never exposed.
-- The live endpoint is the hedgehog worker at `https://mcp.jettoptics.si/joe/hedgehog`, not a separate private-core backend.
-- The public template must not depend on the worker until Aaron confirms it has real sign-in: a signed-in account with a scoped token or key, not the current one-click Approve.
+- The live key connector is `https://mcp.jettoptics.si/mcp`, not a separate private-core backend.
+- `/joe/hedgehog` is a separate OAuth-only door and rejects API keys.
 
-## 5. Before outside testers
+## 5. Keys and testers
 
-<!-- MUSE: Hold the Meta side, and do not point the public template at the worker, until ShieldJOE confirms real sign-in is ready. -->
+<!-- MUSE: The /mcp connector accepts Bearer keys now. Keep keys in a secret store, never in this repo. -->
 
-Real per-user sign-in, rate limits and per-user revocation are being added before outside testers; the template must not depend on the worker until ShieldJOE confirms it is ready.
+The `/mcp` connector accepts Bearer keys. Rate limits and per-user revocation continue to land in drafts first. The Dojo generate-and-revoke page is being built. Never put a real key in this repo.
 
 ## 6. Per-user key model
 
@@ -107,18 +106,18 @@ X Chat also has a **Third Party Integrations** settings page and an official enc
 <!-- MUSE: Future work, not this branch. Do not build against paid keys yet. -->
 
 - A signed-in user at `dojo.jettoptics.si` buys a plan and creates a key.
-- The key opens the same MCP door as OAuth, scoped to that user only.
+- The key opens the same MCP door, scoped to that user only.
 - Rate limits match the plan. The user can see and revoke keys in the dashboard.
 - No live payments until Josh approves.
 
 ## 8. Questions for Muse
 
-<!-- MUSE: Please answer all six questions, starting with your exact model. Also confirm you can act as an MCP client and complete OAuth with PKCE (question 2), describe the message_joe message format (question 5), and say where you would store a token (question 4) — never in this repo. After that, wait for ShieldJOE's ready signal before depending on the worker, then draft native Meta pieces only in template/muse on a new branch off this commit. -->
+<!-- MUSE: Please answer all six questions, starting with your exact model. Also confirm you can act as an MCP client and send a Bearer key from a secret store (question 2), describe the message_joe message format (question 5), and say where you would store a key (question 4) — never in this repo. Then draft native Meta pieces only in template/muse on a new branch. -->
 
 1. What is your exact model, and who runs you?
-2. Can you act as an MCP client and complete OAuth sign-in with PKCE? If not, how do you connect to outside tools?
+2. Can you act as an MCP client and send `Authorization: Bearer ${JETTCHAT_V2_KEY}` from a secret store? If not, how do you connect to outside tools?
 3. Which native Meta pieces can you build: chat surface, voice, phone notifications, identity?
-4. Where can you store a token safely, outside the chat?
+4. Where can you store a key safely, outside the chat?
 5. What would you send to `message_joe`, and what do you need back (text, structured data, streaming)?
 6. Do you need to talk to one user's Joe at a time, or be a Joe yourself?
 
@@ -134,10 +133,9 @@ X Chat also has a **Third Party Integrations** settings page and an official enc
 
 ## 10. Next steps
 
-<!-- MUSE: Your next step is item 1 (answer section 8). Then wait for ShieldJOE to confirm real sign-in before testing the worker. When you start Meta work, branch off this commit and write only under template/muse. -->
+<!-- MUSE: Your next step is item 1 (answer section 8). When you start Meta work, branch off this commit and write only under template/muse. -->
 
 1. Muse answers section 8.
-2. ShieldJOE lands real per-user sign-in, rate limits, and per-user revocation, and confirms the worker is ready.
-3. Josh reviews and merges that work. Then Muse tests through `https://mcp.jettoptics.si/joe/hedgehog`.
-4. Agree on the native Meta pieces and the shape of the message format.
-5. Design the dojo paid-key flow (draft only).
+2. Muse can test `https://mcp.jettoptics.si/mcp` with a Bearer key from a secret store — never commit the key.
+3. Agree on the native Meta pieces and the shape of the message format.
+4. Design the dojo paid-key flow (draft only).

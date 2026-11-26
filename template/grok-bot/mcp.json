@@ -1,8 +1,11 @@
 {
   "mcpServers": {
-    "joe-hedgehog": {
+    "jettchatv2": {
       "type": "http",
-      "url": "https://mcp.jettoptics.si/joe/hedgehog"
+      "url": "https://mcp.jettoptics.si/mcp",
+      "headers": {
+        "Authorization": "Bearer ${JETTCHAT_V2_KEY}"
+      }
     }
   }
 }
